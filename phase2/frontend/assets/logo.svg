@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" aria-hidden="true">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#58a6ff"/>
+      <stop offset="100%" style="stop-color:#79b8ff"/>
+    </linearGradient>
+  </defs>
+  <!-- Chat bubble shape -->
+  <path fill="url(#grad)" d="M8 4C5.79 4 4 5.79 4 8v20c0 2.21 1.79 4 4 4h4v8l8-8h16c2.21 0 4-1.79 4-4V8c0-2.21-1.79-4-4-4H8z"/>
+  <!-- Upward trend line (finance / growth) -->
+  <path fill="none" stroke="#0f1419" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M14 28l6-6 6 4 8-10"/>
+</svg>

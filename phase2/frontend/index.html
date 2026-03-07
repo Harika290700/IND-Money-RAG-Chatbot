@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>INDmoney RAG Assistant</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #171717;
+      --surface-2: #1c1c1c;
+      --border: #2d2d2d;
+      --text: #e6e6e6;
+      --text-muted: #8c8c8c;
+      --accent: #58a6ff;
+      --accent-hover: #79b8ff;
+      --user-bubble: #2d3a4d;
+      --assistant-bubble: #1c1c1c;
+      --link: #58a6ff;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: #0a0a0a;
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    /* Rounded app container */
+    .app {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      max-width: 1200px;
+      margin: 12px auto;
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      background: var(--surface);
+    }
+    /* Top header bar */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .header-bar .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-bar .logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #58a6ff, #a371f7);
+      flex-shrink: 0;
+    }
+    .header-bar .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+    .header-bar h1,
+    .header-bar .header-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      max-width: 60vw;
+      line-height: 1.3;
+    }
+    .header-bar .close-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+    .header-bar .close-btn:hover {
+      color: var(--text);
+      background: var(--border);
+    }
+    .header-subtitle {
+      margin: 0;
+      padding: 6px 16px 10px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+    /* Body: sidebar + main */
+    .body {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+    /* Left sidebar */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--surface-2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 12px 0;
+    }
+    .sidebar-actions {
+      padding: 0 12px 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    .sidebar-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      text-align: left;
+      margin-bottom: 4px;
+    }
+    .sidebar-btn:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+    .sidebar-btn svg {
+      flex-shrink: 0;
+      opacity: 0.9;
+    }
+    .sidebar-suggested {
+      padding: 0 12px 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    .sidebar-label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .sidebar-suggestion {
+      display: block;
+      width: 100%;
+      padding: 8px 10px;
+      margin-bottom: 4px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      text-align: left;
+      line-height: 1.3;
+    }
+    .sidebar-suggestion:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+    .sidebar-history {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 12px;
+    }
+    .history-item {
+      display: block;
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 2px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .history-item:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+    /* Main chat area - min-height: 0 so #messages can scroll */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+    #messages {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .welcome {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      text-align: center;
+    }
+    .welcome.hidden { display: none; }
+    .welcome h2 {
+      margin: 0 0 32px;
+      font-size: 1.75rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .suggestions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      max-width: 520px;
+    }
+    .suggestion-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-align: left;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .suggestion-btn:hover {
+      background: var(--surface-2);
+      border-color: var(--text-muted);
+    }
+    .suggestion-btn svg {
+      flex-shrink: 0;
+      color: var(--text-muted);
+    }
+    .msg {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: var(--user-bubble);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .msg.assistant {
+      align-self: flex-start;
+      background: var(--assistant-bubble);
+      border: 1px solid var(--border);
+    }
+    .msg .sources {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .msg .sources a {
+      color: var(--link);
+      text-decoration: none;
+    }
+    .msg .sources a:hover { text-decoration: underline; }
+    .msg .sources ul { margin: 6px 0 0; padding-left: 1.2rem; }
+    .msg .scraped-data {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .msg .scraped-data h4 { margin: 0 0 8px; font-size: 0.85rem; color: var(--text); }
+    .msg .scraped-data .fund-block {
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+    .msg .scraped-data .fund-block:last-child { margin-bottom: 0; }
+    .msg .scraped-data .fund-link {
+      display: inline-block;
+      margin-bottom: 6px;
+      color: var(--link);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .msg .scraped-data .fund-link:hover { text-decoration: underline; }
+    .msg .scraped-data .fund-fields {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 4px 12px;
+      font-size: 0.75rem;
+    }
+    .msg .scraped-data .fund-fields span { color: var(--text-muted); }
+    .msg .scraped-data .fund-fields strong { color: var(--text); }
+    .msg-feedback {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .msg-feedback span { margin-right: 4px; }
+    .msg-feedback button {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+    }
+    .msg-feedback button:hover { color: var(--accent); background: var(--border); }
+    .msg-feedback button.sent { color: var(--accent); cursor: default; }
+    #loading {
+      align-self: flex-start;
+      padding: 12px 16px;
+      background: var(--assistant-bubble);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin: 0 24px 16px;
+    }
+    #loading.hidden { display: none; }
+    /* Bottom input bar */
+    .input-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface-2);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .input-bar .icon-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .input-bar .icon-btn:hover {
+      background: var(--text-muted);
+    }
+    .input-bar .icon-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .input-bar #input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 0.95rem;
+      resize: none;
+      min-height: 44px;
+      max-height: 120px;
+      font-family: inherit;
+    }
+    .input-bar #input::placeholder {
+      color: var(--text-muted);
+    }
+    .input-bar #input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .input-bar .send-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .input-bar .send-btn:hover:not(:disabled) {
+      background: var(--accent);
+      color: #fff;
+    }
+    .input-bar .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .disclaimer {
+      padding: 8px 16px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-align: center;
+      background: var(--surface-2);
+      border-top: 1px solid var(--border);
+    }
+    .disclaimer .last-updated {
+      display: block;
+      margin-top: 4px;
+    }
+    @media (max-width: 640px) {
+      .sidebar { display: none; }
+      .app { margin: 0; border-radius: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header-bar">
+      <div class="brand">
+        <div class="logo">
+          <img src="/assets/logo.svg" alt="" width="32" height="32" />
+        </div>
+        <h1 class="header-title">INDMoney FAQ Assistant</h1>
+      </div>
+      <button type="button" class="close-btn" aria-label="Close">×</button>
+    </header>
+    <p class="header-subtitle">Get Factual Details about SBI, HDFC, ICICI, Motilal Oswal, and Canara Robeco funds. No Investment or Personal Advices.</p>
+    <div class="body">
+      <aside class="sidebar">
+        <div class="sidebar-actions">
+          <button type="button" class="sidebar-btn" id="new-chat-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New chat
+          </button>
+          <button type="button" class="sidebar-btn" id="search-btn" aria-label="Search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            Search
+          </button>
+        </div>
+        <div class="sidebar-suggested">
+          <span class="sidebar-label">Suggested questions</span>
+          <button type="button" class="sidebar-suggestion" data-prompt="What is the NAV of HDFC Mid Cap Fund today?">What is the NAV of HDFC Mid Cap Fund today?</button>
+          <button type="button" class="sidebar-suggestion" data-prompt="What expense ratio does SBI Contra Fund charge?">What expense ratio does SBI Contra Fund charge?</button>
+          <button type="button" class="sidebar-suggestion" data-prompt="Is there an exit load for Canara Robeco Mutual Fund?">Is there an exit load for Canara Robeco Mutual Fund?</button>
+        </div>
+        <div class="sidebar-history" id="history"></div>
+      </aside>
+      <main class="main">
+        <div class="welcome" id="welcome">
+          <h2>What can I help you with?</h2>
+          <div class="suggestions">
+            <button type="button" class="suggestion-btn" data-prompt-template="What expense ratio does {fund} charge?"><span>Expense ratio & fund details</span></button>
+            <button type="button" class="suggestion-btn" data-prompt-template="What is the minimum SIP for {fund}?"><span>Minimum SIP & investment</span></button>
+            <button type="button" class="suggestion-btn" data-prompt-template="What is the exit load for {fund}?"><span>Exit load & charges</span></button>
+            <button type="button" class="suggestion-btn" data-prompt-template="Does {fund} have a lock-in? How many years?"><span>ELSS lock-in & tax</span></button>
+          </div>
+        </div>
+        <div id="messages" role="log" aria-live="polite"></div>
+        <div id="loading" class="hidden" aria-busy="true">Thinking…</div>
+      </main>
+    </div>
+    <div class="input-bar">
+      <button type="button" class="icon-btn" id="new-chat-icon" aria-label="New chat">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <textarea id="input" rows="1" placeholder="Message…" aria-label="Your question"></textarea>
+      <button type="button" class="send-btn" id="send" aria-label="Send">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+      </button>
+    </div>
+    <footer class="disclaimer"><span class="last-updated" id="last-updated"></span></footer>
+  </div>
+  <script>
+    (function () {
+      const messagesEl = document.getElementById("messages");
+      const welcomeEl = document.getElementById("welcome");
+      const loadingEl = document.getElementById("loading");
+      const inputEl = document.getElementById("input");
+      const sendBtn = document.getElementById("send");
+      const historyEl = document.getElementById("history");
+      const newChatBtn = document.getElementById("new-chat-btn");
+      const newChatIcon = document.getElementById("new-chat-icon");
+      const searchBtn = document.getElementById("search-btn");
+      const closeBtn = document.querySelector(".close-btn");
+      const lastUpdatedEl = document.getElementById("last-updated");
+
+      var chatHistory = [];
+      var pendingPromptTemplate = null;
+      var pendingLabel = null;
+
+      function formatLastUpdated(iso) {
+        if (!iso) return "";
+        try {
+          var d = new Date(iso);
+          if (isNaN(d.getTime())) return "";
+          return "Data last updated: " + d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+        } catch (e) { return ""; }
+      }
+      function loadMeta() {
+        fetch(apiBase() + "/meta").then(function (r) { return r.json(); }).then(function (data) {
+          if (lastUpdatedEl && data.last_updated) {
+            lastUpdatedEl.textContent = " " + formatLastUpdated(data.last_updated);
+          }
+        }).catch(function () {});
+      }
+      loadMeta();
+
+      function apiBase() {
+        if (window.PHASE2_API_BASE) return window.PHASE2_API_BASE;
+        return "";
+      }
+
+      function showWelcome(show) {
+        welcomeEl.classList.toggle("hidden", !show);
+      }
+
+      function stripSourceFromText(text) {
+        if (!text || typeof text !== "string") return text;
+        return text.split("\n").filter(function (line) {
+          var s = line.trim().toLowerCase();
+          if (!s) return true;
+          if (s.indexOf("source:") !== -1 || s.indexOf("source :") !== -1) return false;
+          if (line.trim().indexOf("http://") === 0 || line.trim().indexOf("https://") === 0) return false;
+          if (s.indexOf("indmoney.com") !== -1 && (s.indexOf("http") !== -1 || s.indexOf("www.") !== -1)) return false;
+          return true;
+        }).join("\n").trim();
+      }
+
+      function appendMessage(role, text, sources, scrapedData, questionForFeedback) {
+        if (role === "assistant" && text) text = stripSourceFromText(text);
+        const div = document.createElement("div");
+        div.className = "msg " + role;
+        div.setAttribute("data-role", role);
+        const content = document.createTextNode(text || "");
+        div.appendChild(content);
+        if (sources && sources.length > 0) {
+          const sourcesDiv = document.createElement("div");
+          sourcesDiv.className = "sources";
+          const s = sources[0];
+          const a = document.createElement("a");
+          a.href = s.url;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.textContent = s.title && s.title.length < 80 ? s.title : s.url;
+          sourcesDiv.appendChild(a);
+          div.appendChild(sourcesDiv);
+        }
+        if (role === "assistant" && questionForFeedback) {
+          div.setAttribute("data-question", questionForFeedback);
+          const feedbackDiv = document.createElement("div");
+          feedbackDiv.className = "msg-feedback";
+          feedbackDiv.innerHTML = "<span>Was this helpful?</span>";
+          const upBtn = document.createElement("button");
+          upBtn.type = "button";
+          upBtn.setAttribute("aria-label", "Thumbs up");
+          upBtn.textContent = "\uD83D\uDC4D";
+          const downBtn = document.createElement("button");
+          downBtn.type = "button";
+          downBtn.setAttribute("aria-label", "Thumbs down");
+          downBtn.textContent = "\uD83D\uDC4E";
+          const reportBtn = document.createElement("button");
+          reportBtn.type = "button";
+          reportBtn.textContent = "Report error";
+          function sendFeedback(rating) {
+            fetch(apiBase() + "/feedback", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ question: questionForFeedback, rating: rating }),
+            }).then(function () {
+              upBtn.classList.add("sent");
+              downBtn.classList.add("sent");
+              reportBtn.classList.add("sent");
+              upBtn.disabled = downBtn.disabled = reportBtn.disabled = true;
+              feedbackDiv.querySelector("span").textContent = "Thanks for your feedback.";
+            }).catch(function () {});
+          }
+          upBtn.addEventListener("click", function () { if (!upBtn.disabled) sendFeedback("up"); });
+          downBtn.addEventListener("click", function () { if (!downBtn.disabled) sendFeedback("down"); });
+          reportBtn.addEventListener("click", function () { if (!reportBtn.disabled) sendFeedback("report"); });
+          feedbackDiv.appendChild(upBtn);
+          feedbackDiv.appendChild(downBtn);
+          feedbackDiv.appendChild(reportBtn);
+          div.appendChild(feedbackDiv);
+        }
+        messagesEl.appendChild(div);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      function setLoading(on) {
+        loadingEl.classList.toggle("hidden", !on);
+        sendBtn.disabled = on;
+        if (on) messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      function addToHistory(displayLabel, fullMessage) {
+        if (!fullMessage || !fullMessage.trim()) return;
+        var display = (displayLabel && displayLabel.trim()) ? displayLabel.trim().slice(0, 60) : fullMessage.trim().slice(0, 60);
+        chatHistory.unshift({ display: display, message: fullMessage.trim() });
+        if (chatHistory.length > 20) chatHistory.pop();
+        renderHistory();
+      }
+
+      function renderHistory() {
+        historyEl.innerHTML = "";
+        chatHistory.forEach(function (item) {
+          var display = typeof item === "string" ? item : item.display;
+          var message = typeof item === "string" ? item : item.message;
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "history-item";
+          btn.textContent = display;
+          btn.title = display;
+          btn.addEventListener("click", function () {
+            inputEl.value = message;
+            inputEl.focus();
+          });
+          historyEl.appendChild(btn);
+        });
+      }
+
+      function sendMessage(message, displayLabel) {
+        message = (message || "").trim();
+        if (!message) return;
+        var display = (displayLabel && displayLabel.trim()) ? displayLabel.trim() : message;
+        if (messagesEl.children.length === 0) addToHistory(display, message);
+        showWelcome(false);
+        appendMessage("user", display);
+        setLoading(true);
+        fetch(apiBase() + "/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: message }),
+        })
+          .then(function (res) {
+            if (!res.ok) throw new Error("Request failed");
+            return res.json();
+          })
+          .then(function (data) {
+            appendMessage("assistant", data.answer || "No response.", data.sources || [], data.scraped_data || [], message);
+          })
+          .catch(function () {
+            appendMessage("assistant", "Something went wrong. Please try again.", [], [], message);
+          })
+          .finally(function () {
+            setLoading(false);
+          });
+      }
+
+      function send() {
+        var message = inputEl.value;
+        if (!message || !message.trim()) return;
+        inputEl.value = "";
+        if (pendingPromptTemplate) {
+          var fund = message.trim();
+          var fullQuestion = pendingPromptTemplate.replace(/\{fund\}/g, fund);
+          var display = pendingLabel ? pendingLabel + " – " + fund : fullQuestion;
+          pendingPromptTemplate = null;
+          pendingLabel = null;
+          sendMessage(fullQuestion, display);
+          return;
+        }
+        sendMessage(message);
+      }
+
+      function newChat() {
+        messagesEl.innerHTML = "";
+        showWelcome(true);
+        setLoading(false);
+        inputEl.value = "";
+        pendingPromptTemplate = null;
+        pendingLabel = null;
+        inputEl.focus();
+      }
+
+      sendBtn.addEventListener("click", send);
+      newChatBtn.addEventListener("click", newChat);
+      newChatIcon.addEventListener("click", newChat);
+      searchBtn.addEventListener("click", function () { inputEl.focus(); });
+      closeBtn.addEventListener("click", function () { newChat(); });
+
+      inputEl.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          send();
+        }
+      });
+
+      document.querySelectorAll(".suggestion-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var template = btn.getAttribute("data-prompt-template");
+          var label = (btn.textContent || "").trim();
+          if (template) {
+            pendingPromptTemplate = template;
+            pendingLabel = label;
+            showWelcome(false);
+            appendMessage("assistant", "What is the fund you want to know about?", [], [], null);
+            inputEl.focus();
+            return;
+          }
+          var prompt = btn.getAttribute("data-prompt");
+          if (prompt) sendMessage(prompt, label);
+        });
+      });
+      document.querySelectorAll(".sidebar-suggestion").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var prompt = btn.getAttribute("data-prompt");
+          var label = (btn.textContent || "").trim();
+          if (prompt) sendMessage(prompt, label);
+        });
+      });
+
+      renderHistory();
+    })();
+  </script>
+</body>
+</html>

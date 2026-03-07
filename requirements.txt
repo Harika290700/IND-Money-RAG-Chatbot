@@ -1,0 +1,24 @@
+# Phase 1: RAG pipeline
+httpx>=0.27.0
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+chromadb>=0.4.0
+# Optional: use on Linux or Python 3.9+ so Chroma gets SQLite >= 3.35 (see README / TROUBLESHOOTING)
+# pysqlite3-binary>=0.5.0
+sentence-transformers>=2.2.0
+python-dotenv>=1.0.0
+
+# Phase 2: Chat backend (FastAPI + Groq)
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+groq>=0.4.0
+
+# Streamlit deployment
+streamlit>=1.28.0
+
+# Phase 3: Scheduler (in-process daily run)
+schedule>=1.2.0
+
+# Tests
+pytest>=7.0.0
+pytest-asyncio>=0.21.0

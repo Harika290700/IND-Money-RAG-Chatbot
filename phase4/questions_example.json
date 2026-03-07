@@ -1,0 +1,10 @@
+{
+  "questions": [
+    {"q": "What is the nav for ICICI large cap fund?", "expected_keywords": ["121", "nav", "ICICI", "large cap"]},
+    {"q": "What is the expense ratio of SBI Contra Fund?", "expected_keywords": ["expense", "0.71", "SBI", "Contra"]},
+    {"q": "What is the minimum SIP for SBI Small Cap Fund?", "expected_keywords": ["500", "SIP", "minimum"]},
+    {"q": "Does SBI ELSS have a lock-in? How many years?", "expected_keywords": ["lock", "3", "year", "ELSS"]},
+    {"q": "How do I download capital gains statement on IndMoney?", "expected_keywords": ["More", "Taxation", "Download"]},
+    {"q": "What is exit load in mutual funds?", "expected_keywords": ["exit load", "redeem", "charge"]}
+  ]
+}
