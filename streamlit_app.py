@@ -33,8 +33,22 @@ try:
 except Exception:
     pass
 
-from phase2.rag_service import chat
-from phase6 import record_feedback
+# Import RAG service (requires ChromaDB; fails on Python 3.14 with Pydantic error)
+try:
+    from phase2.rag_service import chat
+    from phase6 import record_feedback
+except Exception as e:
+    err_msg = str(e).lower()
+    if "3.14" in str(sys.version) or "configerror" in err_msg or "infer type" in err_msg:
+        st.error(
+            "**This app requires Python 3.11 or 3.12 on Streamlit Cloud.**\n\n"
+            "You're currently running Python 3.14, which is not compatible with ChromaDB.\n\n"
+            "**Fix:** Delete this app, then create a new app from the same repo. "
+            "In **Advanced settings**, set **Python version** to **3.11** or **3.12**, then deploy. "
+            "Re-add your Secrets (e.g. `GROQ_API_KEY`) after redeploying."
+        )
+        st.stop()
+    raise
 
 # Custom CSS for a cleaner chat look
 st.markdown("""

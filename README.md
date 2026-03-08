@@ -205,17 +205,17 @@ streamlit run streamlit_app.py
 - Optional: create `.streamlit/secrets.toml` (see format below) for local secrets; this file is gitignored.
 
 **2. Deploy on Streamlit Community Cloud**
+- **Required:** In **Advanced settings**, set **Python version** to **3.11** or **3.12** before deploying. (Python 3.14 is not supported; ChromaDB will fail with a Pydantic error.)
 - Push the repo to GitHub (ensure `data/scraped_funds.json` is committed; optionally `chroma_db/` for vector search).
 - Go to [share.streamlit.io](https://share.streamlit.io), sign in, and click **New app**.
 - Set **Repository** to your GitHub repo, **Branch** to `main`, **Main file path** to `streamlit_app.py`.
-- Open **Advanced settings** and set **Python version** to **3.11** or **3.12** (avoid 3.14 if you see ChromaDB/Pydantic import errors).
-- In **Advanced settings** → **Secrets**, add your Groq API key in TOML format:
+- Open **Advanced settings** → set **Python version** to **3.11** or **3.12** → then **Secrets** and add your Groq API key in TOML format:
   ```toml
   GROQ_API_KEY = "your-groq-api-key"
   # Optional: GROQ_MODEL = "llama-3.1-8b-instant"
   ```
 - Click **Deploy**. The app reads `GROQ_API_KEY` from Streamlit secrets automatically.
-- **If you see** `pydantic.v1.errors.ConfigError: unable to infer type` **on deploy:** delete the app and redeploy, and in Advanced settings choose **Python 3.11** or **3.12**.
+- **If you already deployed and see a Pydantic/ConfigError:** You must delete the app and create a new one, then in Advanced settings select **Python 3.11** or **3.12** (the Python version cannot be changed after the first deploy).
 
 **3. Behaviour**
 - `streamlit_app.py` uses the same `phase2.rag_service.chat()` and Phase 6 feedback. Sidebar has suggested questions and “New chat”; the main area has the four topic buttons (ask for fund then answer) and the chat. Source link is shown under each answer; thumbs up/down record feedback.
