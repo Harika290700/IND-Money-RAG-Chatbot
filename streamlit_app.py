@@ -83,6 +83,16 @@ with st.sidebar:
     for prompt in sidebar_prompts:
         if st.button(prompt, key=f"side_{hash(prompt) % 10**8}", use_container_width=True):
             st.session_state.messages.append({"role": "user", "content": prompt})
+            # Get answer from RAG and append assistant message
+            result = chat(prompt)
+            answer = result.get("answer", "No response.")
+            sources = result.get("sources", [])[:1]
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": answer,
+                "sources": sources,
+                "question_for_feedback": prompt,
+            })
             st.rerun()
 
     st.divider()
