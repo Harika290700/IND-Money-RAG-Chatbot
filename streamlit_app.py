@@ -67,6 +67,25 @@ if "pending_prompt_template" not in st.session_state:
     st.session_state.pending_prompt_template = None
 if "pending_label" not in st.session_state:
     st.session_state.pending_label = None
+if "pending_suggested_question" not in st.session_state:
+    st.session_state.pending_suggested_question = None
+
+# Process a suggested-question click from the previous run (do RAG in main flow so UI updates reliably)
+if st.session_state.pending_suggested_question:
+    prompt = st.session_state.pending_suggested_question
+    st.session_state.pending_suggested_question = None
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.spinner("Thinking…"):
+        result = chat(prompt)
+    answer = result.get("answer", "No response.")
+    sources = result.get("sources", [])[:1]
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": answer,
+        "sources": sources,
+        "question_for_feedback": prompt,
+    })
+    st.rerun()
 
 # Header
 st.title("INDMoney FAQ Assistant")
@@ -82,17 +101,7 @@ with st.sidebar:
     ]
     for prompt in sidebar_prompts:
         if st.button(prompt, key=f"side_{hash(prompt) % 10**8}", use_container_width=True):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            # Get answer from RAG and append assistant message
-            result = chat(prompt)
-            answer = result.get("answer", "No response.")
-            sources = result.get("sources", [])[:1]
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": answer,
-                "sources": sources,
-                "question_for_feedback": prompt,
-            })
+            st.session_state.pending_suggested_question = prompt
             st.rerun()
 
     st.divider()
