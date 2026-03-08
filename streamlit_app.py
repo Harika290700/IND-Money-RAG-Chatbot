@@ -75,17 +75,21 @@ if st.session_state.pending_suggested_question:
     prompt = st.session_state.pending_suggested_question
     st.session_state.pending_suggested_question = None
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.spinner("Thinking…"):
-        result = chat(prompt)
-    answer = result.get("answer", "No response.")
-    sources = result.get("sources", [])[:1]
+    try:
+        with st.spinner("Thinking…"):
+            result = chat(prompt)
+        answer = result.get("answer", "No response.")
+        sources = result.get("sources", [])[:1]
+    except Exception as e:
+        answer = f"Sorry, I couldn't get an answer right now. ({e!s})"
+        sources = []
     st.session_state.messages.append({
         "role": "assistant",
         "content": answer,
         "sources": sources,
         "question_for_feedback": prompt,
     })
-    st.rerun()
+    # Don't rerun — continue to render so the new Q&A shows in this run
 
 # Header
 st.title("INDMoney FAQ Assistant")
@@ -99,8 +103,8 @@ with st.sidebar:
         "What expense ratio does SBI Contra Fund charge?",
         "Is there an exit load for Canara Robeco Mutual Fund?",
     ]
-    for prompt in sidebar_prompts:
-        if st.button(prompt, key=f"side_{hash(prompt) % 10**8}", use_container_width=True):
+    for i, prompt in enumerate(sidebar_prompts):
+        if st.button(prompt, key=f"side_q_{i}", use_container_width=True):
             st.session_state.pending_suggested_question = prompt
             st.rerun()
 
