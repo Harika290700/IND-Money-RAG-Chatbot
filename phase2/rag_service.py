@@ -49,7 +49,7 @@ except ImportError:
     _GROQ_AVAILABLE = False
     Groq = None
 
-SYSTEM_PROMPT = """You are a helpful assistant for IndMoney mutual fund information. Answer **only** from the provided context (scraped fund data). Use a clear, full-sentence style. Examples: for exit load say "The exit load for [fund] is X.X% if redeemed in 1 year."; for NAV say "The NAV of [fund] is ₹X.XX as on [date]."; for expense ratio say "The expense ratio for [fund] is X.XX%."; for minimum SIP say "The minimum SIP for [fund] is ₹X."; for risk say "The fund is [High/Medium/Low] Risk." Do not include the word "Source" or a URL in your answer—the link is shown separately. Do not list extra details. Do not use your own knowledge. If the context does not contain the answer, say so. Do not answer questions about personal information."""
+SYSTEM_PROMPT = """You are a helpful assistant for IndMoney mutual fund information. Answer **only** from the provided context (scraped fund data). Use a clear, full-sentence style. Examples: for exit load say "The exit load for [fund] is X.X% if redeemed in 1 year."; for NAV questions return **only** the NAV value—e.g. "The NAV of [fund] is ₹X.XX." Do **not** include the date or "as on" in NAV answers. For expense ratio say "The expense ratio for [fund] is X.XX%."; for minimum SIP say "The minimum SIP for [fund] is ₹X."; for risk say "The fund is [High/Medium/Low] Risk." Do not include the word "Source" or a URL in your answer—the link is shown separately. Do not list extra details. Do not use your own knowledge. If the context does not contain the answer, say so. Do not answer questions about personal information."""
 
 # Heuristic: questions asking for or about personal/private user data are out of scope
 PERSONAL_INFO_PATTERNS = re.compile(
@@ -99,6 +99,13 @@ def _strip_source_from_answer(answer: str) -> str:
             continue
         kept.append(line)
     return "\n".join(kept).strip() or ""
+
+
+def _strip_nav_date_from_answer(answer: str) -> str:
+    """Remove ' as on <date>' from NAV-style answers so only the NAV value is shown."""
+    if not answer or not isinstance(answer, str):
+        return answer or ""
+    return re.sub(r"\s+as\s+on\s+[^.]+\.?", ".", answer, flags=re.IGNORECASE).strip()
 
 
 def _is_exit_load_question(message: str) -> bool:
@@ -342,11 +349,8 @@ def _answer_from_scraped_data(
                 sentence = f"The fund is {_normalize_risk_label(val)}."
         elif "nav" in keys_to_show or "nav_date" in keys_to_show:
             nav = (row.get("nav") or "").strip()
-            nav_date = (row.get("nav_date") or "").strip()
             if nav:
-                sentence = f"The NAV of {fund} is ₹{nav}" + (f" as on {nav_date}." if nav_date else ".")
-            elif nav_date:
-                sentence = f"The NAV date for {fund} is {nav_date}."
+                sentence = f"The NAV of {fund} is ₹{nav}."
         elif "expense_ratio" in keys_to_show:
             val = row.get("expense_ratio")
             if val:
@@ -391,15 +395,23 @@ def _generate_with_groq(context: str, question: str, timeout_sec: int = 30) -> s
     def _call() -> str | None:
         try:
             client = Groq(api_key=api_key)
-            completion = client.chat.completions.create(
-                messages=[
+            kwargs = {
+                "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": user_content},
                 ],
-                model=model,
-                temperature=0.2,
-                max_tokens=384,
-            )
+                "model": model,
+                "temperature": 0.2,
+                "max_tokens": 384,
+            }
+            # Reduce visible thinking for reasoning models (Qwen 3, GPT-OSS)
+            model_lower = model.lower()
+            if "qwen3" in model_lower:
+                kwargs["reasoning_format"] = "hidden"
+                kwargs["reasoning_effort"] = "none"
+            elif "gpt-oss" in model_lower:
+                kwargs["include_reasoning"] = False
+            completion = client.chat.completions.create(**kwargs)
             text = completion.choices[0].message.content
             return (text or "").strip() or None
         except Exception:
@@ -471,6 +483,8 @@ def chat(
     answer = _generate_with_groq(context, message, timeout_sec=LLM_TIMEOUT_SEC)
     if answer:
         answer = _strip_source_from_answer(answer)
+        if "nav" in message.lower() or "net asset" in message.lower():
+            answer = _strip_nav_date_from_answer(answer)
 
     if not answer and scraped_data:
         # Fallback 1: concise answer from scraped_data (only what was asked, e.g. NAV only)
@@ -493,5 +507,7 @@ def chat(
         answer = "I couldn't generate a response right now. Please try again."
     else:
         answer = _strip_source_from_answer(answer)
+        if "nav" in message.lower() or "net asset" in message.lower():
+            answer = _strip_nav_date_from_answer(answer)
 
     return {"answer": answer, "sources": sources, "scraped_data": scraped_data}

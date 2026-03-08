@@ -2,11 +2,11 @@
 httpx>=0.27.0
 beautifulsoup4>=4.12.0
 lxml>=5.0.0
-chromadb>=0.4.0
+chromadb==0.4.24
 # Optional: use on Linux or Python 3.9+ so Chroma gets SQLite >= 3.35 (see README / TROUBLESHOOTING)
 # pysqlite3-binary>=0.5.0
 sentence-transformers>=2.2.0
-python-dotenv>=1.0.0
+python-dotenv>=1.0.0 
 
 # Phase 2: Chat backend (FastAPI + Groq)
 fastapi>=0.109.0
