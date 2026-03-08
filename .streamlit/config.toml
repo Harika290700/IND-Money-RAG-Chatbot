@@ -1,0 +1,18 @@
+# Streamlit config for local run and Streamlit Community Cloud deployment.
+# See https://docs.streamlit.io/develop/api-reference/configuration
+
+[server]
+headless = true
+port = 8501
+enableCORS = false
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+primaryColor = "#1f77b4"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#262730"
+font = "sans serif"

@@ -202,16 +202,24 @@ pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
 - Open the URL shown (e.g. http://localhost:8501). Set `GROQ_API_KEY` in `.env` or in the environment for LLM answers.
+- Optional: create `.streamlit/secrets.toml` (see format below) for local secrets; this file is gitignored.
 
 **2. Deploy on Streamlit Community Cloud**
-- Push the repo to GitHub.
-- Go to [share.streamlit.io](https://share.streamlit.io), sign in, and **New app**.
-- Set **Repository** to your repo, **Branch** to `main`, **Main file path** to `streamlit_app.py`.
-- Add **Secrets** (or in the app’s Advanced settings): `GROQ_API_KEY` = your Groq API key.
-- Deploy. Ensure `data/scraped_funds.json` is in the repo (and optionally `chroma_db/` for vector search).
+- Push the repo to GitHub (ensure `data/scraped_funds.json` is committed; optionally `chroma_db/` for vector search).
+- Go to [share.streamlit.io](https://share.streamlit.io), sign in, and click **New app**.
+- Set **Repository** to your GitHub repo, **Branch** to `main`, **Main file path** to `streamlit_app.py`.
+- Open **Advanced settings** and set **Python version** to **3.11** or **3.12** (avoid 3.14 if you see ChromaDB/Pydantic import errors).
+- In **Advanced settings** → **Secrets**, add your Groq API key in TOML format:
+  ```toml
+  GROQ_API_KEY = "your-groq-api-key"
+  # Optional: GROQ_MODEL = "llama-3.1-8b-instant"
+  ```
+- Click **Deploy**. The app reads `GROQ_API_KEY` from Streamlit secrets automatically.
+- **If you see** `pydantic.v1.errors.ConfigError: unable to infer type` **on deploy:** delete the app and redeploy, and in Advanced settings choose **Python 3.11** or **3.12**.
 
 **3. Behaviour**
 - `streamlit_app.py` uses the same `phase2.rag_service.chat()` and Phase 6 feedback. Sidebar has suggested questions and “New chat”; the main area has the four topic buttons (ask for fund then answer) and the chat. Source link is shown under each answer; thumbs up/down record feedback.
+- Config for theme and server is in `.streamlit/config.toml`.
 
 ## Next
 

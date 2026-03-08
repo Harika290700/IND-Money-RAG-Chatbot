@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import chromadb
-from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 
 from .config import CHROMA_COLLECTION_NAME, CHROMA_PERSIST_DIR
@@ -15,13 +14,17 @@ def get_embedding_model():
 
 
 def get_chroma_client():
-    """Chroma client with persistence."""
+    """Chroma client with persistence. Works with chromadb 0.4.x and 1.5.x+."""
     path = Path(CHROMA_PERSIST_DIR)
     path.mkdir(parents=True, exist_ok=True)
-    return chromadb.PersistentClient(
-        path=str(path),
-        settings=Settings(anonymized_telemetry=False),
-    )
+    try:
+        from chromadb.config import Settings
+        return chromadb.PersistentClient(
+            path=str(path),
+            settings=Settings(anonymized_telemetry=False),
+        )
+    except (ImportError, TypeError, Exception):
+        return chromadb.PersistentClient(path=str(path))
 
 
 def embed_and_store(chunks: list[tuple[str, dict]], collection_name: str = CHROMA_COLLECTION_NAME):

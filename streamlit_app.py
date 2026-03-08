@@ -2,8 +2,10 @@
 Streamlit deployment: INDMoney RAG Chatbot UI.
 Uses the same phase2 RAG + chat logic; no FastAPI required.
 Run: streamlit run streamlit_app.py
+Deploy: push to GitHub, then connect repo at share.streamlit.io and set GROQ_API_KEY in Secrets.
 """
 from pathlib import Path
+import os
 import sys
 
 # Ensure project root is on path
@@ -12,8 +14,6 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 import streamlit as st
-from phase2.rag_service import chat
-from phase6 import record_feedback
 
 # Page config (must be first Streamlit command)
 st.set_page_config(
@@ -22,6 +22,19 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="expanded",
 )
+
+# Inject Streamlit secrets into env so phase2.config / rag_service see GROQ_API_KEY on Streamlit Cloud
+try:
+    if getattr(st, "secrets", None):
+        for key in ("GROQ_API_KEY", "GROQ_MODEL"):
+            val = st.secrets.get(key)
+            if val:
+                os.environ[key] = str(val).strip()
+except Exception:
+    pass
+
+from phase2.rag_service import chat
+from phase6 import record_feedback
 
 # Custom CSS for a cleaner chat look
 st.markdown("""

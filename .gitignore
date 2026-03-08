@@ -17,6 +17,7 @@ build/
 # Environment and secrets
 .env
 .env.local
+.streamlit/secrets.toml
 *.pem
 
 # IDE and OS
